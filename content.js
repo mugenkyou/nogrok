@@ -1,127 +1,69 @@
-// Grok Blocker - Robust 2026 version - MutationObserver + polling + Toggle + Counter
+// Grok Blocker - New 2026 Algorithm (Custom Phrase, Robust Detection)
 
-const POST_SELECTOR = 'article[data-testid="tweet"]';
-const TEXT_SELECTOR = '[data-testid="tweetText"]';
-// Updated Regex from latest request
-const GROK_REGEX = /hey\s*(grok|grocks?|grock|grockk?|gr0k|g r o k)[^\w]*?(a|am|an|and|&|ma|m)?\s*(make|makes?|mke|mak|makee|mk|amke)\s*(a|the|this|plan|aplna|aplan|plan)?\s*plan/i;
+let blockPhrase = 'hey grok make a plan'; // Default
 
-let isBlockingEnabled = true;
-let pendingBlockCount = 0;
+const POST_SEL = 'article[data-testid="tweet"]';
 
-// Initialize state from storage
-chrome.storage.sync.get(['blockingEnabled'], (data) => {
-  isBlockingEnabled = data.blockingEnabled !== false; // Default true
-});
+function getPostText(post) {
+  // Fallback chain for text extraction (handles 2026 variations)
+  let el = post.querySelector('[data-testid="tweetText"]');
+  if (el) return (el.textContent || el.innerText || '').trim();
 
-// Listen for toggle changes
-chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'sync' && changes.blockingEnabled) {
-    isBlockingEnabled = changes.blockingEnabled.newValue;
-    if (!isBlockingEnabled) {
-      unblockAll();
-    } else {
-      scanFeed();
+  el = post.querySelector('div[dir="auto"]');
+  if (el) return (el.textContent || el.innerText || '').trim();
+
+  // Broad fallback
+  return post.innerText.trim().substring(0, 500);
+}
+
+function shouldBlock(text, phrase) {
+  if (!text || !phrase) return false;
+  return text.toLowerCase().includes(phrase.toLowerCase());
+}
+
+function hideSpamPosts() {
+  document.querySelectorAll(POST_SEL).forEach(post => {
+    const text = getPostText(post);
+    if (shouldBlock(text, blockPhrase)) {
+      console.log('[GrokBlocker] HIDING MATCH:', text.substring(0, 120) + '...');
+      post.remove(); // Reliable hide
+      post.style.display = 'none !important'; // Fallback
+      chrome.storage.sync.get(['blockCount'], data => {
+        chrome.storage.sync.set({ blockCount: (data.blockCount || 0) + 1 });
+      });
     }
-  }
+  });
+}
+
+// Timed scans for delayed loading (new algo: more delays for search reliability)
+const delays = [500, 1500, 3000, 5000, 8000, 12000, 20000];
+delays.forEach(d => setTimeout(hideSpamPosts, d));
+
+// Fast polling interval (1.2s for dynamic search/feed)
+setInterval(hideSpamPosts, 1200);
+
+// MutationObserver on best target (new: fallback to body if primary missing)
+setTimeout(() => {
+  const target = document.querySelector('[data-testid="primaryColumn"]') ||
+                 document.querySelector('main[role="main"]') ||
+                 document.querySelector('[role="region"]') ||
+                 document.body;
+  if (!target) return console.log('[GrokBlocker] No observer target');
+
+  const observer = new MutationObserver(() => setTimeout(hideSpamPosts, 300)); // Slight delay for text
+  observer.observe(target, { childList: true, subtree: true });
+  console.log('[GrokBlocker] Observer active');
+}, 1000);
+
+// Load and update phrase
+chrome.storage.sync.get(['blockPhrase'], data => {
+  blockPhrase = data.blockPhrase || blockPhrase;
+  hideSpamPosts();
 });
 
-// Restore hidden posts if toggle is switched off
-function unblockAll() {
-  const hiddenPosts = document.querySelectorAll('article[data-grok-blocked="true"]');
-  hiddenPosts.forEach(post => {
-    post.style.display = '';
-    post.removeAttribute('data-grok-blocked');
-  });
-}
-
-function getFeedTarget() {
-  return document.querySelector('[data-testid="primaryColumn"]') ||
-         document.querySelector('main[role="main"]') ||
-         document.body;
-}
-
-function hideSpamPost(post) {
-  if (!isBlockingEnabled) return false;
-  
-  // Prevent double processing
-  if (post.getAttribute('data-grok-blocked') === 'true') return false;
-
-  const textEl = post.querySelector(TEXT_SELECTOR);
-  if (!textEl) return false;
-
-  const rawText = (textEl.textContent || textEl.innerText || '').toLowerCase().trim();
-  if (!rawText) return false;
-
-  if (GROK_REGEX.test(rawText)) {
-    // console.log('[GrokBlocker] MATCH FOUND → Hiding:', rawText.substring(0, 120) + '...');
-    
-    // We use display: none instead of remove() to allow Toggling OFF later
-    post.style.display = 'none'; 
-    post.setAttribute('data-grok-blocked', 'true');
-    
-    pendingBlockCount++;
-    return true;
+chrome.storage.onChanged.addListener(changes => {
+  if (changes.blockPhrase) {
+    blockPhrase = changes.blockPhrase.newValue || blockPhrase;
+    hideSpamPosts();
   }
-  return false;
-}
-
-function scanFeed() {
-  if (!isBlockingEnabled) return;
-  const posts = document.querySelectorAll(POST_SELECTOR);
-  posts.forEach(hideSpamPost);
-}
-
-// MutationObserver for new content
-let observer = null;
-function initObserver() {
-  const target = getFeedTarget();
-  if (!target || observer) return;
-
-  observer = new MutationObserver(mutations => {
-    if (!isBlockingEnabled) return;
-
-    let added = false;
-    mutations.forEach(mutation => {
-      if (mutation.addedNodes) {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === 1) {  // ELEMENT_NODE
-            if (node.matches && node.matches(POST_SELECTOR)) {
-              hideSpamPost(node);
-              added = true;
-            } else if (node.querySelectorAll) {
-              node.querySelectorAll(POST_SELECTOR).forEach(hideSpamPost);
-              added = true;
-            }
-          }
-        });
-      }
-    });
-    // Extra safety scan if we detected additions
-    if (added) scanFeed();  
-  });
-
-  observer.observe(target, { childList: true, subtree: true });
-  // console.log('[GrokBlocker] Observer started on feed container');
-}
-
-// Start everything
-setTimeout(() => {
-  scanFeed();
-  initObserver();
-}, 2500);  // Delay for page hydration
-
-// Fallback polling (every 4s) - catches missed loads & flushes counter
-setInterval(() => {
-  // 1. Fallback scan
-  scanFeed();
-
-  // 2. Batched Counter Update
-  if (pendingBlockCount > 0) {
-    const blocksToAdd = pendingBlockCount;
-    pendingBlockCount = 0;
-    
-    chrome.storage.sync.get(['blockCount'], data => {
-      chrome.storage.sync.set({ blockCount: (data.blockCount || 0) + blocksToAdd });
-    });
-  }
-}, 4000);
+});

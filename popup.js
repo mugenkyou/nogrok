@@ -1,39 +1,23 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const countElement = document.getElementById('count');
-  const resetBtn = document.getElementById('resetBtn');
-  const toggleSwitch = document.getElementById('toggleSwitch');
+function updateUI(data) {
+  document.getElementById('count').innerText = `Blocked posts: ${data.blockCount || 0}`;
+  document.getElementById('blockPhrase').value = data.blockPhrase || 'hey grok make a plan';
+}
 
-  // Load initial state
-  chrome.storage.sync.get(['blockCount', 'blockingEnabled'], (data) => {
-    updateDisplay(data.blockCount || 0);
-    // Default enabled if undefined
-    toggleSwitch.checked = data.blockingEnabled !== false;
-  });
+chrome.storage.sync.get(['blockCount', 'blockPhrase'], updateUI);
 
-  // Listen for changes
-  chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'sync') {
-      if (changes.blockCount) {
-        updateDisplay(changes.blockCount.newValue || 0);
-      }
-      if (changes.blockingEnabled) {
-        toggleSwitch.checked = changes.blockingEnabled.newValue !== false;
-      }
-    }
-  });
-
-  // Toggle switch handler
-  toggleSwitch.addEventListener('change', (e) => {
-    chrome.storage.sync.set({ blockingEnabled: e.target.checked });
-  });
-
-  // Reset button handler
-  resetBtn.addEventListener('click', () => {
-    chrome.storage.sync.set({ blockCount: 0 });
-    updateDisplay(0);
-  });
-
-  function updateDisplay(count) {
-    countElement.textContent = `Blocked: ${count}`;
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.blockCount || changes.blockPhrase) {
+    chrome.storage.sync.get(['blockCount', 'blockPhrase'], updateUI);
   }
+});
+
+document.getElementById('save').addEventListener('click', () => {
+  const phrase = document.getElementById('blockPhrase').value.trim();
+  if (phrase) {
+    chrome.storage.sync.set({ blockPhrase: phrase });
+  }
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  chrome.storage.sync.set({ blockCount: 0 });
 });

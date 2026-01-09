@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Grok Blocker",
   "version": "1.0",
-  "description": "Blocks annoying 'hey grok make a plan' posts on X and shows how many you've blocked.",
+  "description": "Blocks custom phrase posts on X and counts them",
   "permissions": [
     "storage",
     "activeTab"
@@ -13,8 +13,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.x.com/*",
-        "*://*.twitter.com/*"
+        "https://x.com/*",
+        "https://twitter.com/*"
       ],
       "js": [
         "content.js"
