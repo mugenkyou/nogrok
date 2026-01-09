@@ -1,28 +1,25 @@
-// Grok Blocker - FINAL 2026 ALGO (Simplified: Hardcoded 'hey grok')
-// Aggressive & Reliable - Toggle Support
+// Grok Blocker - Final (Only 'hey grok' + Toggle + Hardcoded Phase)
 
-const BLOCK_PHRASE = "hey grok";  // Hardcoded
+const PHRASE = 'hey grok'; 
 let isBlockingEnabled = true;
 
 const POST_SELECTOR = 'article[data-testid="tweet"]';
+const TEXT_SELECTOR = '[data-testid="tweetText"]';
 
-// Initialize blocking state from storage
+// Load state
 chrome.storage.sync.get(['blockingEnabled'], (data) => {
-  isBlockingEnabled = data.blockingEnabled !== false; // Default true if undefined
-  
-  if (isBlockingEnabled) {
-    blockSpamPosts();
-  }
+  isBlockingEnabled = data.blockingEnabled !== false; // Default true
+  if (isBlockingEnabled) scanPosts();
 });
 
-// Listen for Toggle changes ONLY
+// Listen for toggle
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync' && changes.blockingEnabled) {
     isBlockingEnabled = changes.blockingEnabled.newValue;
     if (isBlockingEnabled) {
-      blockSpamPosts(); // Run immediately when enabled
+      scanPosts();
     } else {
-      unblockAll(); // Unhide everything when disabled
+      unblockAll();
     }
   }
 });
@@ -35,77 +32,92 @@ function unblockAll() {
   });
 }
 
-function extractTweetText(post) {
-  // Priority 1: Official attribute
-  let el = post.querySelector('[data-testid="tweetText"]');
-  if (el) {
-    const txt = (el.textContent || el.innerText || "").trim();
-    if (txt) return txt;
-  }
-
-  // Priority 2: Common text containers
-  el = post.querySelector('div[dir="auto"]');
-  if (el) {
-    const txt = (el.textContent || el.innerText || "").trim();
-    if (txt) return txt;
-  }
-
-  // Priority 3: Full post text fallback
-  return post.innerText.trim();
+function isMatch(text) {
+  const lowerText = text.toLowerCase();
+  // Flexible match: "hey grok", "hey @grok", "Hey grok", "hey grok,", etc.
+  return lowerText.includes('hey grok') || 
+         lowerText.includes('hey @grok') ||
+         lowerText.includes('heygrok') ||  // no space
+         lowerText.includes('hey grock') || // common typo
+         lowerText.includes('hay grok');   // typo variant
 }
 
-function shouldBlock(text) {
-  return text && text.toLowerCase().includes(BLOCK_PHRASE.toLowerCase());
+function getTarget() {
+  return document.querySelector('[data-testid="primaryColumn"]') ||
+         document.querySelector('div[data-testid="search-results"]') || 
+         document.querySelector('main[role="main"]') ||
+         document.querySelector('[role="region"]') ||
+         document.body;
 }
 
-function blockSpamPosts() {
-  if (!isBlockingEnabled) return; // Exit if disabled
+function hidePost(post) {
+  // Check if double processing (only if enabled)
+  if (!isBlockingEnabled) return false;
+  if (post.getAttribute('data-grok-blocked') === 'true') return false;
 
+  let textEl = post.querySelector(TEXT_SELECTOR);
+  let text = '';
+  if (textEl) {
+    text = (textEl.textContent || textEl.innerText || '').trim();
+  } else {
+    textEl = post.querySelector('div[dir="auto"]');
+    if (textEl) text = (textEl.textContent || textEl.innerText || '').trim();
+    if (!text) text = post.innerText.trim();
+  }
+
+  if (text && isMatch(text)) {
+    console.log('[GrokBlocker] Hiding post:', text.substring(0, 100) + '...');
+    
+    // Use display:none for reversibility
+    post.style.display = 'none';
+    post.setAttribute('data-grok-blocked', 'true');
+
+    chrome.storage.sync.get(['blockCount'], data => {
+      chrome.storage.sync.set({ blockCount: (data.blockCount || 0) + 1 });
+    });
+    return true;
+  }
+  return false;
+}
+
+function scanPosts() {
+  if (!isBlockingEnabled) return;
   const posts = document.querySelectorAll(POST_SELECTOR);
+  let blocked = 0;
   posts.forEach(post => {
-    // Avoid double processing if already blocked
-    if (post.getAttribute('data-grok-blocked') === 'true') return;
-
-    const text = extractTweetText(post);
-    if (shouldBlock(text)) {
-      console.log("[GrokBlocker] MATCH & REMOVED: " + text.substring(0, 150) + "...");
-      
-      // Use display:none for reversible toggle
-      post.style.display = "none";
-      post.setAttribute('data-grok-blocked', 'true');
-
-      // Update counter
-      chrome.storage.sync.get(["blockCount"], data => {
-        const newCount = (data.blockCount || 0) + 1;
-        chrome.storage.sync.set({ blockCount: newCount });
-      });
-    }
+    if (hidePost(post)) blocked++;
   });
+  if (blocked > 0) console.log(`[GrokBlocker] Blocked ${blocked} posts this scan`);
 }
 
-// === Super aggressive timing for late text loading ===
-const scanDelays = [300, 1000, 2500, 4500, 7000, 10000, 15000, 25000];
-scanDelays.forEach(delay => setTimeout(blockSpamPosts, delay));
+let observer = null;
+function startObserver() {
+  const target = getTarget();
+  if (!target || observer) return;
+  observer = new MutationObserver(mutations => {
+    // Only process if enabled
+    if (!isBlockingEnabled) return; 
 
+    mutations.forEach(mut => {
+      if (mut.addedNodes.length) {
+        mut.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            if (node.matches(POST_SELECTOR)) hidePost(node);
+            else node.querySelectorAll(POST_SELECTOR).forEach(hidePost);
+          }
+        });
+      }
+    });
+    setTimeout(scanPosts, 500);
+  });
+  observer.observe(target, { childList: true, subtree: true });
+  console.log('[GrokBlocker] Observer started');
+}
+
+// Initial scans
+setTimeout(scanPosts, 1000);
+setTimeout(scanPosts, 3000);
+setTimeout(scanPosts, 6000);
+setTimeout(startObserver, 2000);
 // Fast polling
-setInterval(blockSpamPosts, 1000);
-
-// MutationObserver
-setTimeout(() => {
-  const targetNode = document.querySelector('[data-testid="primaryColumn"]') ||
-                     document.querySelector("main") ||
-                     document.querySelector('[role="region"]') ||
-                     document.body;
-
-  if (targetNode) {
-    const observer = new MutationObserver(mutations => {
-      setTimeout(blockSpamPosts, 400);
-    });
-
-    observer.observe(targetNode, {
-      childList: true,
-      subtree: true
-    });
-    console.log("[GrokBlocker] MutationObserver ACTIVE");
-  }
-}, 1500);
+setInterval(scanPosts, 1000);

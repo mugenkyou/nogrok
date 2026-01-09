@@ -2,15 +2,23 @@
   "manifest_version": 3,
   "name": "Grok Blocker",
   "version": "1.1",
-  "description": "Block annoying Grok plan posts on X & count them",
-  "permissions": ["storage"],
+  "description": "Blocks 'hey grok' posts on X and counts them",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
   "action": {
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["https://x.com/*", "https://twitter.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_end"
     }
   ]
