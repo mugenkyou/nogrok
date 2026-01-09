@@ -18,16 +18,31 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function updateUI(data) {
-    countEl.innerText = `Blocked: ${data.blockCount || 0}`;
+    countEl.innerText = data.blockCount || 0;
     if (toggleSwitch) {
-      toggleSwitch.checked = data.blockingEnabled !== false; // Default true
+      const isActive = data.blockingEnabled !== false;
+      toggleSwitch.checked = isActive;
+      
+      const dot = document.getElementById('statusDot');
+      if (dot) {
+        if (isActive) dot.classList.remove('inactive');
+        else dot.classList.add('inactive');
+      }
     }
+  }
+
+  function reloadTabs() {
+    chrome.tabs.query({ url: ["*://twitter.com/*", "*://x.com/*"] }, (tabs) => {
+      tabs.forEach(tab => chrome.tabs.reload(tab.id));
+    });
   }
 
   // Toggle Listener
   if (toggleSwitch) {
     toggleSwitch.addEventListener('change', (e) => {
-      chrome.storage.sync.set({ blockingEnabled: e.target.checked });
+      chrome.storage.sync.set({ blockingEnabled: e.target.checked }, () => {
+        reloadTabs();
+      });
     });
   }
 
@@ -108,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.storage.sync.set({ customKeywords: currentKeywords }, () => {
         saveKeywordsBtn.innerText = 'Saved!';
         setTimeout(() => saveKeywordsBtn.innerText = 'Save List', 1500);
+        reloadTabs();
       });
     });
   }
