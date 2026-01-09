@@ -1,23 +1,53 @@
-function updateUI(data) {
-  document.getElementById('count').innerText = `Blocked posts: ${data.blockCount || 0}`;
-  document.getElementById('blockPhrase').value = data.blockPhrase || 'hey grok make a plan';
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const countEl = document.getElementById('count');
+  const toggleSwitch = document.getElementById('toggleSwitch');
+  const statusLabel = document.getElementById('statusLabel');
+  const resetBtn = document.getElementById('resetBtn');
 
-chrome.storage.sync.get(['blockCount', 'blockPhrase'], updateUI);
+  // Load Initial Data
+  chrome.storage.sync.get(['blockCount', 'blockingEnabled'], (data) => {
+    updateUI(data);
+  });
 
-chrome.storage.onChanged.addListener((changes) => {
-  if (changes.blockCount || changes.blockPhrase) {
-    chrome.storage.sync.get(['blockCount', 'blockPhrase'], updateUI);
+  // Listen for changes
+  chrome.storage.onChanged.addListener((changes) => {
+    if (changes.blockCount || changes.blockingEnabled) {
+      chrome.storage.sync.get(['blockCount', 'blockingEnabled'], (data) => {
+        updateUI(data);
+      });
+    }
+  });
+
+  function updateUI(data) {
+    // Update Counter
+    countEl.innerText = data.blockCount || 0;
+    
+    // Update Toggle
+    const isEnabled = data.blockingEnabled !== false; // Default true
+    if (toggleSwitch) {
+      toggleSwitch.checked = isEnabled;
+    }
+    
+    // Update visual label
+    if (statusLabel) {
+      statusLabel.innerText = isEnabled ? 'Enabled' : 'Disabled';
+      statusLabel.style.color = isEnabled ? '#1D9BF0' : '#71767B';
+    }
   }
-});
 
-document.getElementById('save').addEventListener('click', () => {
-  const phrase = document.getElementById('blockPhrase').value.trim();
-  if (phrase) {
-    chrome.storage.sync.set({ blockPhrase: phrase });
-  }
-});
+  // Toggle Switch Handler
+  toggleSwitch.addEventListener('change', (e) => {
+    const isEnabled = e.target.checked;
+    chrome.storage.sync.set({ blockingEnabled: isEnabled });
+    // Optimistic UI update
+    if (statusLabel) {
+      statusLabel.innerText = isEnabled ? 'Enabled' : 'Disabled';
+      statusLabel.style.color = isEnabled ? '#1D9BF0' : '#71767B';
+    }
+  });
 
-document.getElementById('reset').addEventListener('click', () => {
-  chrome.storage.sync.set({ blockCount: 0 });
+  // Reset Button Handler
+  resetBtn.addEventListener('click', () => {
+    chrome.storage.sync.set({ blockCount: 0 });
+  });
 });

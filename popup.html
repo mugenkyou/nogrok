@@ -1,23 +1,152 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Grok Blocker</title>
   <style>
-    body { background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 220px; padding: 12px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-    h3 { color: #1D9BF0; margin: 0 0 10px; text-align: center; font-size: 18px; }
-    p { margin: 5px 0; font-size: 14px; }
-    input { width: 100%; padding: 6px; background: #2F3336; border: 1px solid #1D9BF0; color: #fff; border-radius: 4px; margin-bottom: 8px; }
-    button { background: #1D9BF0; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; width: 100%; }
-    button:hover { background: #0C84E4; }
-    #reset { background: #2F3336; margin-top: 10px; }
+    body {
+      background-color: #000000;
+      color: #FFFFFF;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      width: 260px;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    h1 {
+      color: #1D9BF0;
+      font-size: 22px;
+      margin: 0;
+      font-weight: 800;
+    }
+    
+    .card {
+      background-color: #16181C;
+      border: 1px solid #2F3336;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0;
+    }
+    
+    .status-text {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+    
+    .switch input { opacity: 0; width: 0; height: 0; }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #2F3336;
+      transition: .4s;
+      border-radius: 28px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #1D9BF0;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    /* Counter */
+    .counter-row {
+      margin-top: 16px;
+      border-top: 1px solid #2F3336;
+      padding-top: 16px;
+    }
+    
+    .count-label {
+      font-size: 13px;
+      color: #71767B;
+      margin-bottom: 4px;
+    }
+    
+    .count-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    /* Footer / Reset */
+    button#resetBtn {
+      background: transparent;
+      border: 1px solid #2F3336;
+      color: #71767B;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    
+    button#resetBtn:hover {
+      border-color: #F4212E;
+      color: #F4212E;
+      background: rgba(244, 33, 46, 0.1);
+    }
   </style>
 </head>
 <body>
-  <h3>Grok Blocker</h3>
-  <p id="count">Blocked posts: 0</p>
-  <input id="blockPhrase" type="text" placeholder="Enter phrase to block (e.g., testblock)">
-  <button id="save">Save Phrase</button>
-  <button id="reset">Reset Count</button>
+  <div class="header">
+    <h1>Grok Blocker</h1>
+  </div>
+
+  <div class="card">
+    <div class="toggle-row">
+      <span class="status-text" id="statusLabel">Enabled</span>
+      <label class="switch">
+        <input type="checkbox" id="toggleSwitch" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="counter-row">
+      <div class="count-label">Blocked Posts</div>
+      <div class="count-number" id="count">0</div>
+    </div>
+  </div>
+
+  <button id="resetBtn">Reset Counter</button>
+
   <script src="popup.js"></script>
 </body>
 </html>
