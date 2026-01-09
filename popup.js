@@ -91,7 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
       keywordsSection.style.display = isHidden ? 'block' : 'none';
       if (isHidden) {
         chrome.storage.sync.get(['customKeywords'], (data) => {
-          currentKeywords = data.customKeywords || [];
+          // Default to ['@grok'] if no keywords saved yet
+          if (data.customKeywords) {
+            currentKeywords = data.customKeywords;
+          } else {
+            currentKeywords = ['@grok'];
+          }
           renderTags();
         });
       }

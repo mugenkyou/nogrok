@@ -15,7 +15,7 @@ chrome.storage.sync.get(['blockingEnabled', 'customKeywords'], (data) => {
   }
   
   if (isBlockingEnabled) {
-    console.log('[GrokBlocker] Started. Custom Keywords:', customKeywords.length);
+    console.log('[No Grok] Started. Custom Keywords:', customKeywords.length);
     runScans();
   }
 });
@@ -30,7 +30,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
     if (changes.customKeywords) {
       customKeywords = (changes.customKeywords.newValue || []).map(k => k.toLowerCase());
-      console.log('[GrokBlocker] Keywords updated:', customKeywords);
+      console.log('[No Grok] Keywords updated:', customKeywords);
       blockSpamPosts();
     }
   }
@@ -89,7 +89,7 @@ function blockSpamPosts() {
 
     const text = getPostText(post);
     if (text && isMatch(text)) {
-      console.log('[GrokBlocker] MATCH & REMOVED:', text.substring(0, 80));
+      console.log('[No Grok] MATCH & REMOVED:', text.substring(0, 80));
       
       post.style.display = 'none';
       post.setAttribute('data-grok-blocked', 'true');
@@ -101,7 +101,7 @@ function blockSpamPosts() {
     }
   });
 
-  if (blockedCount > 0) console.log(`[GrokBlocker] Blocked ${blockedCount} posts.`);
+  if (blockedCount > 0) console.log(`[No Grok] Blocked ${blockedCount} posts.`);
 }
 
 // === Scheduling ===
