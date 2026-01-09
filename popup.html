@@ -41,6 +41,28 @@
 
   <p id="count">Blocked: 0</p>
   <button id="reset">Reset Count</button>
+  
+  <!-- Custom Keywords UI -->
+  <button id="manageKeywords" style="margin-top:12px; background:#333; color:#fff; border:1px solid #536471;">Manage More Keywords</button>
+  
+  <div id="keywordsSection" style="display:none; margin-top:12px;">
+    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+      <input id="newKeyword" type="text" placeholder="Enter word..." style="flex:1; padding:6px; background:#16181C; border:1px solid #1D9BF0; color:#fff; border-radius:4px; margin:0;">
+      <button id="addKeyword" style="width:auto; padding:0 12px; margin:0; background:#1D9BF0; color:white;">+</button>
+    </div>
+    
+    <div id="tagsContainer" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; max-height: 120px; overflow-y: auto;">
+      <!-- Tags will appear here -->
+    </div>
+
+    <button id="saveKeywords" style="background:#1D9BF0; color:#fff;">Save List</button>
+    <style>
+      .tag { background: #16181C; border: 1px solid #2F3336; border-radius: 12px; padding: 4px 10px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+      .tag-remove { cursor: pointer; color: #F4212E; font-weight: bold; font-size: 14px; }
+      .tag-remove:hover { color: #ffadad; }
+    </style>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>
