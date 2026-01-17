@@ -4,8 +4,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetBtn = document.getElementById('reset');
 
   // Load Initial Data
-  chrome.storage.sync.get(['blockCount', 'blockingEnabled'], (data) => {
+  chrome.storage.sync.get(['blockCount', 'blockingEnabled', 'customKeywords'], (data) => {
     updateUI(data);
+    
+    // Initialize keywords with defaults if empty
+    if (data.customKeywords) {
+      currentKeywords = data.customKeywords;
+    } else {
+      currentKeywords = ['hey grok', '@grok'];
+    }
+    renderTags();
   });
 
   // Listen for changes
@@ -15,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI(data);
       });
     }
+    // Note: We don't subscribe to customKeywords here for popup to avoid overwriting 
+    // local edits while the user is typing, unless we wanted multi-window sync.
+    // For now, local state takes precedence in the popup.
   });
 
   function updateUI(data) {
@@ -76,12 +87,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function saveData() {
+    chrome.storage.sync.set({ customKeywords: currentKeywords }, () => {
+      if (saveKeywordsBtn) {
+        saveKeywordsBtn.innerText = 'Saved!';
+        setTimeout(() => saveKeywordsBtn.innerText = 'Save List', 1500);
+      }
+      reloadTabs();
+    });
+  }
+
   function addKeyword() {
     const val = newKeywordInput.value.trim();
     if (val && !currentKeywords.includes(val)) {
       currentKeywords.push(val);
       renderTags();
       newKeywordInput.value = '';
+      saveData(); // Auto-save on add
     }
   }
 
@@ -89,17 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     manageBtn.addEventListener('click', () => {
       const isHidden = keywordsSection.style.display === 'none';
       keywordsSection.style.display = isHidden ? 'block' : 'none';
-      if (isHidden) {
-        chrome.storage.sync.get(['customKeywords'], (data) => {
-          // Default to ['hey grok', '@grok'] if no keywords saved yet
-          if (data.customKeywords) {
-            currentKeywords = data.customKeywords;
-          } else {
-            currentKeywords = ['hey grok', '@grok'];
-          }
-          renderTags();
-        });
-      }
+      // Data is already loaded on init, no need to fetch again
     });
   }
 
@@ -119,17 +131,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = e.target.getAttribute('data-index');
         currentKeywords.splice(index, 1);
         renderTags();
+        saveData(); // Auto-save on remove
       }
     });
   }
 
   if (saveKeywordsBtn) {
     saveKeywordsBtn.addEventListener('click', () => {
-      chrome.storage.sync.set({ customKeywords: currentKeywords }, () => {
-        saveKeywordsBtn.innerText = 'Saved!';
-        setTimeout(() => saveKeywordsBtn.innerText = 'Save List', 1500);
-        reloadTabs();
-      });
+      saveData();
     });
   }
 });
