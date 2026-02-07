@@ -141,4 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
       saveData();
     });
   }
+
+  const githubLink = document.getElementById('githubLink');
+  if (githubLink) {
+    githubLink.addEventListener('click', () => {
+      chrome.tabs.create({ url: 'https://github.com/mugenkyou/nogrok' });
+    });
+  }
 });
