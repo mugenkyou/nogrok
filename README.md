@@ -1,51 +1,53 @@
 # No Grok
 
-**Block "Hey Grok" posts and reclaim your X (Twitter) timeline.**
+**Reclaim your X (Twitter) timeline.**
 
-![Version](https://img.shields.io/badge/version-1.2-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Status](https://img.shields.io/badge/status-active-success.svg)
+![Version](https://img.shields.io/badge/version-1.2-blue.svg?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
+![Status](https://img.shields.io/badge/status-active-success.svg?style=flat-square)
 
-**No Grok** is a lightweight, high-performance Chrome Extension designed to filter unwanted content from your X (formerly Twitter) experience, specifically targeting "Hey Grok" interactions and other spam patterns.
+---
 
-## Features
+### The Problem
+The growing volume of automated and AI-driven interactions on X (formerly Twitter) degrades feed quality and distracts from meaningful content..
 
-- **Advanced Filtering**: Automatically hides posts containing "Hey Grok", "@grok", and various permutations.
-- **Custom Keywords**: Define your own keywords or phrases to block specific content.
-- **Real-time Blocking**: Scans the timeline during scrolling and removes unwanted content instantly.
-- **Block Counter**: Tracks the number of blocked posts.
-- **Sync Enabled**: Settings and custom keywords sync across Chrome devices.
-- **Performance Focused**: Utilizes efficient DOM observation to ensure smooth browsing.
+### The Solution
+**No Grok** provides precise, rule-based content filtering to suppress “Hey Grok” interactions and similar spam patterns, operating seamlessly in the background with minimal overhead.
 
-## Installation
+---
 
-### From Source (Developer Mode)
+## Key Capabilities
 
-1.  **Clone or Download** this repository:
+- **Zero-Latency Filtering**: DOM observation engine removes unwanted elements the instant they appear.
+- **Custom Blocklists**: Define exactly what triggers a block. "Hey Grok", "@grok", or any custom phrase.
+- **Sync Across Devices**: Your settings travel with your Chrome profile. Configure once, run everywhere.
+- **Privacy First**: No tracking. No analytics. Your data stays on your machine.
+- **Performance Optimized**: Built to be lightweight. No measurable impact on browser performance.
+
+## Installation from Source
+
+1.  **Clone the repository**
     ```bash
     git clone https://github.com/mugenkyou/nogrok.git
     ```
-2.  Open **Chrome** and navigate to `chrome://extensions/`.
-3.  Toggle **Developer mode** in the top-right corner.
-4.  Click **Load unpacked**.
-5.  Select the `nogrok` folder.
-6.  The extension is now active.
+2.  **Open Chrome Extensions**
+    Navigate to `chrome://extensions/`
+3.  **Enable Developer Mode**
+    Toggle the switch in the top-right corner.
+4.  **Load Unpacked**
+    Click the button and select the `nogrok` directory.
 
 ## Usage
 
-1.  **Click the Extension Icon** in the toolbar to open the popup.
-2.  **Toggle Blocking**: Enable or disable the blocker.
-3.  **Manage Keywords**: 
-    - Click "Manage Keywords" to view the list.
-    - Enter a new word and press Enter or click "Add".
-    - Click the remove icon on a tag to delete it.
-    - Keywords are saved automatically.
-4.  **Reset Counter**: Clear the blocked post statistics.
+**Click the extension icon to:**
+- Toggle the filtering engine on/off.
+- Manage your custom blocklist.
+- View real-time statistics on blocked content.
 
 ## Contributing
 
-Contributions are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We believe in open software. If you have ideas for improvements or have found a bug, please check our [Contribution Guidelines](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Distributed under the MIT License. See `LICENSE` for more information.
